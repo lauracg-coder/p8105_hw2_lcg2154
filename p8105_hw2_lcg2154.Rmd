@@ -83,13 +83,56 @@ nyc_transit_df =
     ("./Data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv")) %>%
   janitor::clean_names() 
 ```
-Clean the dataset to include line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance.
+Clean the dataset to include line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance.Convert the entry variable from a character to a logical variable. 
 
 ```{r nyc_clean_transit_df}
 
 nyc_clean_transit_df = 
   select(nyc_transit_df, line:vending, ada, -exit_only) %>% drop_na(entry) %>% drop_na(vending) %>%
   mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE), vending = recode(vending, 'YES' = TRUE, 'NO' =   FALSE))
+```
+
+This dataset contains information information related to each entrance and exit for each subway station in NYC. We cleaned and selected for the data to include `r ls(nyc_clean_transit_df)` and removed repeated objects.We converted the data in the **entry** and **vending** to a logical character. There are a total of `r nrow(nyc_clean_transit_df)` rows and `r ncol(nyc_clean_transit_df)` columns in our final dataset. 
+
+Are these data tidy?
+
+
+How many distinct stations are there? Note that stations are identified both by name and by line (e.g. 125th St A/B/C/D; 125st 1; 125st 4/5); the distinct function may be useful here.
+How many stations are ADA compliant?
+What proportion of station entrances / exits without vending allow entrance?
+Reformat data so that route number and route name are distinct variables. How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+```{r}
+#How many distinct stations are there?
+#nyc_clean_transit_df %>% group_by(station_name) %>% distinct(nyc_clean_transit_df, station_name, keep_all = FALSE)
+#How many stations are ADA compliant?
+#What proportion of station entrances / exits without vending allow entrance?
+
+```
+
+
+## Problem 3
+
+Clean the data in pols-month.csv
+
+```{r pols_month_df}
+pols_month_df = 
+  read_csv(
+    ("./Data/fivethirtyeight_datasets/pols-month.csv")) %>%
+  janitor::clean_names() %>% separate(mon, c("year","month", "day")) %>%
+  mutate( president = prez_dem + prez_gop ) %>% select(-prez_dem,-prez_gop, -day) %>% 
+  relocate( "year", "month")
+# replace month number with month name 
+```
+
+Clean the data in snp.csv,arrange according to year and month, and organize so that year and month are the leading columns.
+```{r snp_df}
+snp_df = 
+  read_csv(
+    ("./Data/fivethirtyeight_datasets/snp.csv")) %>%
+  janitor::clean_names() %>% separate(date, c("month", "day", "year")) %>% 
+  relocate( "year", "month")
+
+##Drop day??
 ```
 
 
