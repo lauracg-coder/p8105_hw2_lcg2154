@@ -86,7 +86,6 @@ nyc_transit_df =
 Clean the dataset to include line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance.Convert the entry variable from a character to a logical variable. 
 
 ```{r nyc_clean_transit_df}
-
 nyc_clean_transit_df = 
   select(nyc_transit_df, line:vending, ada, -exit_only) %>% drop_na(entry) %>% drop_na(vending) %>%
   mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE), vending = recode(vending, 'YES' = TRUE, 'NO' =   FALSE))
@@ -94,46 +93,46 @@ nyc_clean_transit_df =
 
 This dataset contains information information related to each entrance and exit for each subway station in NYC. We cleaned and selected for the data to include `r ls(nyc_clean_transit_df)` and removed repeated objects.We converted the data in the **entry** and **vending** to a logical character. There are a total of `r nrow(nyc_clean_transit_df)` rows and `r ncol(nyc_clean_transit_df)` columns in our final dataset. 
 
-Are these data tidy?
+The data is not very tidy because the **Route** columns have been NA values scattered throughout the data. The dataset can be further organized into clusters that help condense the data. 
 
-
-How many distinct stations are there? Note that stations are identified both by name and by line (e.g. 125th St A/B/C/D; 125st 1; 125st 4/5); the distinct function may be useful here.
-How many stations are ADA compliant?
-What proportion of station entrances / exits without vending allow entrance?
-Reformat data so that route number and route name are distinct variables. How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+## Code for to calculate below answers
 ```{r}
-#How many distinct stations are there?
-#nyc_clean_transit_df %>% group_by(station_name) %>% distinct(nyc_clean_transit_df, station_name, keep_all = FALSE)
-#How many stations are ADA compliant?
-#What proportion of station entrances / exits without vending allow entrance?
+## Number of distinct stations
+distinct_nyc_df = distinct(nyc_clean_transit_df,station_name, station_latitude, .keep_all = TRUE)
+```
+There are `r nrow(distinct_nyc_df)` distinct stations. 
+```{r}
+## Number of stations that are ADA compliant?
+ada_compliant_df = filter(distinct_nyc_df, ada == TRUE )
+```
+There are `r nrow(ada_compliant_df)` stations that are ADA compliant.
+```{r}
+## Proportion of station entrances / exits without vending allow entrance?
 
+entrance_df = nrow(filter(nyc_transit_df, vending == "NO", entry == TRUE))
+
+no_entrance_df = nrow(filter(nyc_transit_df, vending == "NO", entry == FALSE))
+
+proportion = (entrance_df) / (no_entrance_df)
+```
+The proportion of station entrance to exists without vending allow entrance is `r nrow(proportion)`. 
+```{r}
+##How many distinct stations serve the A train? Of the stations that serve the A train, how many are ADA compliant?
+
+### Reformat data so that route number and route name are distinct variables
+Route_df = nyc_clean_transit_df %>% 
+  mutate(route8 = as.character(route8), route9 = as.character(route9),
+  route10 = as.character(route10), route11 = as.character(route11)) %>% 
+  pivot_longer(route1:route11, names_to = "Route_name" , values_to = "Route_number")
+
+Route_distinct_df = distinct(Route_df,Route_name, Route_number, .keep_all = TRUE )
+
+### Number of stations serve the A train.
+
+ #Route_A_distinct_df = nrow(filter(Route_distinct_df, Route_name == "A"))
+
+ #Route_A_distinct_ADAcompliant_df = nrow(filter(Route_A_distinct_df, ada == TRUE))
 ```
 
-
-## Problem 3
-
-Clean the data in pols-month.csv
-
-```{r pols_month_df}
-pols_month_df = 
-  read_csv(
-    ("./Data/fivethirtyeight_datasets/pols-month.csv")) %>%
-  janitor::clean_names() %>% separate(mon, c("year","month", "day")) %>%
-  mutate( president = prez_dem + prez_gop ) %>% select(-prez_dem,-prez_gop, -day) %>% 
-  relocate( "year", "month")
-# replace month number with month name 
-```
-
-Clean the data in snp.csv,arrange according to year and month, and organize so that year and month are the leading columns.
-```{r snp_df}
-snp_df = 
-  read_csv(
-    ("./Data/fivethirtyeight_datasets/snp.csv")) %>%
-  janitor::clean_names() %>% separate(date, c("month", "day", "year")) %>% 
-  relocate( "year", "month")
-
-##Drop day??
-```
-
-
+There are r Route_A_distinct_df stations that serve the A train. Within these station r Route_A_distinct_ADAcompliant_df are ADA compliant. 
 
