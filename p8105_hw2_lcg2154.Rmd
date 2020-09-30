@@ -181,7 +181,12 @@ snp_pols_unemployment_merged_df =
   right_join(unemployment_tidy_df, by = 'month') 
 ```
 
+The three data sets used, **pols-month**/**snp**/**unemployment**, were all taken from the FiveThirtyEight, a website filled with data from a range of topics. The three data sets contain the following content:
+  + **pols-month** details observations/variables of national politicians who are democratic or republican at any given time. We modified the data set to include `r ls(pols_month_df)` in the columns. 
+  + **snp**details observations/variables from Standard & Poor’s stock market index (S&P) to represent the stock market. We modified the data set to include `r ls(snp_df)` in the columns. 
+  + **unemployment** contains observations/variables modified to include `r ls(unemployment_tidy_df)` in the columns.
 
+All three data sets were merged to create a set of the following observations `r ls(snp_pols_unemployment_merged_df)` as a final version. 
 
 
 
