@@ -127,3 +127,60 @@ Route_distinct_df = distinct(Route_df,Route_name, Route_number, .keep_all = TRUE
 3. The proportion of station entrance to exists without vending allow entrance is `r nrow(proportion)`. 
 4. There are `r Route_A_distinct_df` stations that serve the A train. Within these station `r Route_A_distinct_ADAcompliant_df` are ADA compliant. 
 
+## Problem 3
+
+Clean the data in pols-month.csv
+
+```{r pols_month_df}
+pols_month_df = 
+  read_csv(
+    ("./Data/fivethirtyeight_datasets/pols-month.csv")) %>%
+  janitor::clean_names() %>% separate(mon, c("year","month", "day")) %>%
+  mutate( month = as.integer(month), year = as.integer(year), day = as.integer(day) )
+
+month_pols_df =
+  tibble(
+    month = 1:12,
+    month_name = month.name)
+  
+modified_pols_month_df =
+  left_join(pols_month_df,month_pols_df, by = "month") %>%
+  mutate( president = prez_dem + prez_gop ) %>% select(-prez_dem,-prez_gop, -day) %>% 
+  relocate( "year", "month") %>% 
+  mutate(month = as.character(month))
+```
+
+Clean the data in snp.csv,arrange according to year and month, and organize so that year and month are the leading columns.
+```{r snp_df}
+snp_df = 
+  read_csv(
+    ("./Data/fivethirtyeight_datasets/snp.csv")) %>%
+  janitor::clean_names() %>% separate(date, c("month", "day", "year")) %>% 
+  relocate( "year", "month") %>% mutate(year = as.integer(year))
+# note modified data has month as character, snp has month as integer and unemployment has as character
+
+##Drop day and close??
+```
+Tidy the unemployment data
+```{r unemployment_df}
+unemployment_df = 
+  read_csv(
+    ("./Data/fivethirtyeight_datasets/unemployment.csv")) %>%
+  janitor::clean_names()
+
+# Wide to "long" format:
+unemployment_tidy_df =
+  unemployment_df %>%
+  pivot_longer(jan:dec, names_to = "month" , values_to = "percentage of unemployment") 
+```
+Join the datasets by merging snp into pols, and merging unemployment into the result
+
+```{r}
+snp_pols_merged_df = 
+  right_join(snp_df,modified_pols_month_df, by = 'month' )
+```
+
+
+
+
+
