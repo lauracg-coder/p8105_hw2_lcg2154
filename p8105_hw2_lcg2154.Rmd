@@ -112,9 +112,9 @@ proportion = (entrance_df) / (no_entrance_df)
 Route_df = nyc_clean_transit_df %>% 
   mutate(route8 = as.character(route8), route9 = as.character(route9),
   route10 = as.character(route10), route11 = as.character(route11)) %>% 
-  pivot_longer(route1:route11, names_to = "Route_number" , values_to = "Route_name")
+  pivot_longer(route1:route11, names_to = "Route_number", names_prefix = 'route', values_to = "Route_name")
 
-Route_distinct_df = distinct(Route_df,Route_name, Route_number, .keep_all = TRUE ) %>%
+Route_distinct_df = distinct(Route_df,line, station_name, .keep_all = TRUE ) %>%
   mutate(Route_number = as.character(Route_number), Route_name = as.character(Route_name))  %>%
   drop_na()
 
@@ -135,19 +135,20 @@ Clean the data in pols-month.csv
 pols_month_df = 
   read_csv(
     ("./Data/fivethirtyeight_datasets/pols-month.csv")) %>%
-  janitor::clean_names() %>% separate(mon, c("year","month", "day")) %>%
-  mutate( month = as.integer(month), year = as.integer(year), day = as.integer(day) )
+  janitor::clean_names() %>% separate(mon, c("Year","month", "day")) %>%
+  mutate( month = as.integer(month), Year = as.integer(Year), day = as.integer(day) )
 
 month_pols_df =
   tibble(
     month = 1:12,
-    month_name = month.name)
+    month_name = month.abb)
   
 modified_pols_month_df =
-  left_join(pols_month_df,month_pols_df, by = "month") %>%
-  mutate( president = prez_dem + prez_gop ) %>% select(-prez_dem,-prez_gop, -day) %>% 
-  relocate( "year", "month") %>% 
+  left_join(pols_month_df,month_pols_df, by = "month", "Year") %>%
+  mutate( president = case_when(prez_gop == 1 ~ 'gop', prez_dem == 1 ~ 'dem')) %>% select(-prez_dem,-prez_gop, -day) %>% 
+  relocate( "Year", "month") %>% 
   mutate(month = as.character(month))
+##drop month leave month_name
 ```
 
 Clean the data in snp.csv,arrange according to year and month, and organize so that year and month are the leading columns.
@@ -155,30 +156,31 @@ Clean the data in snp.csv,arrange according to year and month, and organize so t
 snp_df = 
   read_csv(
     ("./Data/fivethirtyeight_datasets/snp.csv")) %>%
-  janitor::clean_names() %>% separate(date, c("month", "day", "year")) %>% 
-  relocate( "year", "month") %>% mutate(year = as.integer(year))
-# note modified data has month as character, snp has month as integer and unemployment has as character
+  janitor::clean_names() %>% separate(date, c("month", "day", "Year")) %>% 
+  relocate( "Year", "month") %>% mutate(Year = as.integer(Year), month = as.integer(month)) %>% 
+  mutate(month_name = month.abb[month]) %>% select(-day, -month)
 
-##Drop day and close??
 ```
 Tidy the unemployment data
 ```{r unemployment_df}
 unemployment_df = 
   read_csv(
-    ("./Data/fivethirtyeight_datasets/unemployment.csv")) %>%
-  janitor::clean_names()
+    ("./Data/fivethirtyeight_datasets/unemployment.csv"))
+
+##month_name
 
 # Wide to "long" format:
 unemployment_tidy_df =
   unemployment_df %>%
-  pivot_longer(jan:dec, names_to = "month" , values_to = "percentage of unemployment") 
+  pivot_longer(Jan:Dec, names_to = "month_name" , values_to = "percentage of unemployment") %>%
+  mutate(Year = as.integer(Year))
 ```
 Join the datasets by merging snp into pols, and merging unemployment into the result
 
 ```{r}
-snp_pols_unemployment_merged_df = 
-  right_join(snp_df,modified_pols_month_df, by = 'month' ) %>%
-  right_join(unemployment_tidy_df, by = 'month') 
+all_merged_df = 
+ right_join(snp_df,modified_pols_month_df, by = c('month_name','Year') ) %>%
+ right_join(unemployment_tidy_df, by = c('month_name','Year'))
 ```
 
 The three data sets used, **pols-month**/**snp**/**unemployment**, were all taken from the FiveThirtyEight, a website filled with data from a range of topics. The three data sets contain the following content:
@@ -186,7 +188,7 @@ The three data sets used, **pols-month**/**snp**/**unemployment**, were all take
   + **snp**details observations/variables from Standard & Poor’s stock market index (S&P) to represent the stock market. We modified the data set to include `r ls(snp_df)` in the columns. 
   + **unemployment** contains observations/variables modified to include `r ls(unemployment_tidy_df)` in the columns.
 
-All three data sets were merged to create a set of the following observations `r ls(snp_pols_unemployment_merged_df)` as a final version. 
+All three data sets were merged to create a set of the following observations `r ls(all_merged_df)` as a final version. 
 
 
 
