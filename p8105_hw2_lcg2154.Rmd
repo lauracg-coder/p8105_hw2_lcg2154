@@ -4,11 +4,9 @@ author: Laura Gomez
 output: github_document
 ---
 
-
 ```{r setup}
 library(tidyverse)
 library(readxl)
-
 ```
 
 ## Problem 1
@@ -29,7 +27,7 @@ trashwheel_df =
   )
 ```
 
-Read in precipiation data! For 2018 and 2017
+Read in precipiation data! For 2018 and 2017.
 
 ```{r}
 precip_2018 =
@@ -74,7 +72,7 @@ This dataset contains information from the Mr.Trashwheel trash collector in Balt
 
 ## Problem 2
 
-Read the NYC Transit data. 
+Import and read the NYC Transit data. 
 
 ```{r}
 library(tidyverse)
@@ -83,7 +81,7 @@ nyc_transit_df =
     ("./Data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv")) %>%
   janitor::clean_names() 
 ```
-Clean the dataset to include line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance.Convert the entry variable from a character to a logical variable. 
+Clean the dataset to include line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from a character to a logical variable. 
 
 ```{r nyc_clean_transit_df}
 nyc_clean_transit_df = 
@@ -91,11 +89,11 @@ nyc_clean_transit_df =
   mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE), vending = recode(vending, 'YES' = TRUE, 'NO' =   FALSE))
 ```
 
-This dataset contains information information related to each entrance and exit for each subway station in NYC. We cleaned and selected for the data to include `r ls(nyc_clean_transit_df)` and removed repeated objects.We converted the data in the **entry** and **vending** to a logical character. There are a total of `r nrow(nyc_clean_transit_df)` rows and `r ncol(nyc_clean_transit_df)` columns in our final dataset. 
+This dataset contains information information related to each entrance and exit for each subway station in NYC. We cleaned and selected for the data to include these columns (`r ls(nyc_clean_transit_df)`) dropping a few columns and removing repeated objects from the original data.We converted the data in the **entry** and **vending** to a logical character of *TRUE/FALSE*. There are a total of `r nrow(nyc_clean_transit_df)` rows and `r ncol(nyc_clean_transit_df)` columns in our final dataset. 
 
-The data is not very tidy because the **Route** columns have been NA values scattered throughout the data. The dataset can be further organized into clusters that help condense the data. 
+The data set is still not very tidy. The **Route** columns have been NA values scattered throughout the data. The dataset can be further organized into clusters that help condense the data. 
 
-## Code for to calculate below answers
+## Code used to answers questions below:
 ```{r}
 ## Number of distinct stations
 distinct_nyc_df = distinct(nyc_clean_transit_df,station_name, station_latitude, .keep_all = TRUE)
@@ -129,7 +127,7 @@ Route_distinct_df = distinct(Route_df,line, station_name, .keep_all = TRUE ) %>%
 
 ## Problem 3
 
-Clean the data in pols-month.csv
+Import and clean the data in pols-month.csv.
 
 ```{r pols_month_df}
 pols_month_df = 
@@ -148,10 +146,9 @@ modified_pols_month_df =
   mutate( president = case_when(prez_gop == 1 ~ 'gop', prez_dem == 1 ~ 'dem')) %>% select(-prez_dem,-prez_gop, -day) %>% 
   relocate( "Year", "month") %>% 
   mutate(month = as.character(month))
-##drop month leave month_name
 ```
 
-Clean the data in snp.csv,arrange according to year and month, and organize so that year and month are the leading columns.
+Import and clean the data in snp.csv then arrange according to year and month. Finally organize the dataset so that year and month are the leading columns.
 ```{r snp_df}
 snp_df = 
   read_csv(
@@ -159,15 +156,12 @@ snp_df =
   janitor::clean_names() %>% separate(date, c("month", "day", "Year")) %>% 
   relocate( "Year", "month") %>% mutate(Year = as.integer(Year), month = as.integer(month)) %>% 
   mutate(month_name = month.abb[month]) %>% select(-day, -month)
-
 ```
-Tidy the unemployment data
+Import and clean the unemployment data. Reformat the into a long format and tidy the unemployment data. 
 ```{r unemployment_df}
 unemployment_df = 
   read_csv(
     ("./Data/fivethirtyeight_datasets/unemployment.csv"))
-
-##month_name
 
 # Wide to "long" format:
 unemployment_tidy_df =
@@ -175,20 +169,25 @@ unemployment_tidy_df =
   pivot_longer(Jan:Dec, names_to = "month_name" , values_to = "percentage of unemployment") %>%
   mutate(Year = as.integer(Year))
 ```
-Join the datasets by merging snp into pols, and merging unemployment into the result
+Join the datasets by merging snp into pols-month, and merging unemployment into the result.
 
 ```{r}
 all_merged_df = 
  right_join(snp_df,modified_pols_month_df, by = c('month_name','Year') ) %>%
  right_join(unemployment_tidy_df, by = c('month_name','Year'))
+print(all_merged_df)
 ```
 
-The three data sets used, **pols-month**/**snp**/**unemployment**, were all taken from the FiveThirtyEight, a website filled with data from a range of topics. The three data sets contain the following content:
-  + **pols-month** details observations/variables of national politicians who are democratic or republican at any given time. We modified the data set to include `r ls(pols_month_df)` in the columns. 
-  + **snp**details observations/variables from Standard & Poor’s stock market index (S&P) to represent the stock market. We modified the data set to include `r ls(snp_df)` in the columns. 
-  + **unemployment** contains observations/variables modified to include `r ls(unemployment_tidy_df)` in the columns.
+The three data sets used, **pols-month**/**snp**/**unemployment**, were all taken from the *FiveThirtyEight*, a website filled with data from a range of topics. The three data sets contain the following content:
 
-All three data sets were merged to create a set of the following observations `r ls(all_merged_df)` as a final version. 
+**pols-month** details observations/variables of national politicians who are democratic or republican at any given time. We modified the data set to include: `r ls(pols_month_df)` in the columns. 
+
+**snp**details observations/variables from Standard & Poor’s stock market index (S&P) to represent the stock market. We modified the data set to include: `r ls(snp_df)` in the columns. 
+
+**unemployment** contains observations/variables modified to include: `r ls(unemployment_tidy_df)` in the columns.
+
+All three data sets were merged to create a set to include the following: `r ls(all_merged_df)` in the final dataset. The dataset has `r nrow(all_merged_df)` rows and `r ncol(all_merged_df)` columns in our final merged dataset with a range of `r max(all_merged_df$Year)-min(all_merged_df$Year)` years. 
+
 
 
 
